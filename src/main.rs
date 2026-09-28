@@ -1,8 +1,16 @@
 #![no_std]
 #![no_main]
+#![feature(offset_of)]
 
-
+use core::mem::offset_of;
+use core::mem::size_of;
 use core::panic::PanicInfo;
+use core::ptr::null_mut;
+use core::slice;
+
+type EfiVoid = u8;
+type EfiHandle = u64;
+type Result<T> = core ::result::Resutl<T, &'static str>;
 
 #[repr(C)]
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
@@ -19,6 +27,13 @@ const EFI_GRAPHICS_OUTPUT_PROTOCOL_GUID: EfiGuid = EfiGuid {
     data2: 0x4a28,
     data3: [0x96, 0xfb, 0x7a, 0xde, 0xd0, 0x80, 0x51, 0x6a],
 };
+
+#[derive(Debug, PartialEq, Eq, Copy, Clone)]
+#[must_use]
+#[repr(u64)]
+enum EfiStatus{
+    Success = 0,    
+}
 
 
 #[repr(C)]
@@ -40,11 +55,40 @@ struct EfiSystemTable {
 const _: () = assert!(offset_of!(EfiSystemTable, boot_services) == 96);
 
 
+#[repr(C)]
+#[derive(Debug)]
+struct EfiGraphicsOutputProtocolPixcelInfo {
+    version: u32,
+    pub horizontal_resolution: u32,
+    pub vertical_resolution: u32,
+    _padding0: [u32; 5],
+    pub pixels_per_scan_line: u32,
+}
+const _: () = assert!(size_of::<EfiGraphicsOutputProtocolPixcelInfo>() == 36);
 
+#[repr(C)]
+#[derive(Debug)]
+struct EfiGraphicsOutputProtocolMode<'a> {
+    pub max_mode: u32,
+    pub mode: u32,
+    pub info: &'a EfiGraphicsOutputProtocolPixcelInfo,
+    pub size_of_info: u64,
+    pub frame_buffer_base: usize,
+    pub frame_buffer_size: usize,
+}
+
+#[repc(C)]
+#[derive(Debug)]
+struct EfiGraphicsOutputProtocol<'a> {
+    reserved: [u64; 3],
+    pub mode: &'a EfiGraphicsOutputProtocolMode<'a>,
+}
+fn locate_graphic_protocol<'a> {
+    //次はここから66ページ
+}
 
 
 #[no_mangle]
-
 fn efi_main(_image_handle: EfiHandle, efi_system_table: &EfiSystemTable) {
     let efi_graphics_output_protocol = locate_graphic_protocol(efi_system_table).unwrap();
     let vram_addr = efi_graphics_output_protocol.mode.frame_buffer_base;
