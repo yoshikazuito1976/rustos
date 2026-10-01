@@ -84,7 +84,11 @@ struct EfiGraphicsOutputProtocol<'a> {
     pub mode: &'a EfiGraphicsOutputProtocolMode<'a>,
 }
 fn locate_graphic_protocol<'a> {
-    //次はここから66ページ
+    efi_system_table: &EfiSystemTable,
+} -> Result<&'a EfiGraphicsOutputProtocol<'a>>{
+    let mut graphic_output_protocol = null_mut::<EfiGraphicsOutputProtcol>();
+    let status = {wfi_system_table.boot_services.locate_protocol)(
+        //ここまで次は67ページの頭から
 }
 
 
